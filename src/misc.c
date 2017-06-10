@@ -108,7 +108,7 @@ void print_engine_info(int to_uci)
 {
   char my_date[64];
 
-  printf("CiChess_B3 %s", Version);
+  printf("CiChess_B3a %s", Version);
 
   if (strlen(Version) == 0) {
     int day, month, year;
