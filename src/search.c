@@ -63,11 +63,11 @@ static const int razor_margin[] = { 0, 570, 603, 554 };
 
 // Futility and reductions lookup tables, initialized at startup
 static int FutilityMoveCounts[2][16]; // [improving][depth]
-static int Reductions[2][2][64][64];  // [pv][improving][depth][moveNumber]
+static int Reductions[2][2][128][64];  // [pv][improving][depth][moveNumber]
 
 INLINE Depth reduction(int i, Depth d, int mn, const int NT)
 {
-  return Reductions[NT][i][min(d / ONE_PLY, 63)][min(mn, 63)] * ONE_PLY;
+  return Reductions[NT][i][min(d / ONE_PLY, 127)][min(mn, 63)] * ONE_PLY;
 }
 
 // Skill structure is used to implement strength limit
@@ -151,9 +151,9 @@ static TimePoint lastInfoTime;
 void search_init(void)
 {
   for (int imp = 0; imp <= 1; imp++)
-    for (int d = 1; d < 64; ++d)
+    for (int d = 1; d < 128; ++d)
       for (int mc = 1; mc < 64; ++mc) {
-        double r = log(d) * log(mc) / 1.95;
+        double r = 0.22 * d * (1.0 - exp(-8.5 / d)) * log(mc);
 
         Reductions[NonPV][imp][d][mc] = ((int)lround(r));
         Reductions[PV][imp][d][mc] = max(Reductions[NonPV][imp][d][mc] - 1, 0);
@@ -411,7 +411,7 @@ void thread_search(Pos *pos)
 
       // Reset aspiration window starting size
       if (pos->rootDepth >= 5 * ONE_PLY) {
-        delta = (Value)18;
+        delta = (Value)((int)(17.0 + 0.025 * abs(rm->move[PVIdx].previousScore)));
         alpha = max(rm->move[PVIdx].previousScore - delta,-VALUE_INFINITE);
         beta  = min(rm->move[PVIdx].previousScore + delta, VALUE_INFINITE);
       }
