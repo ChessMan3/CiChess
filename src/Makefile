@@ -25,7 +25,7 @@
 UNAME = $(shell uname)
 
 ### Executable name
-EXE = CiChess
+EXE = corcfishextended
 
 ### Installation dir definitions
 PREFIX = /usr/local
