@@ -155,8 +155,8 @@ struct Pos {
   Depth completedDepth;
 
   // Pointers to thread-specific tables.
-  HistoryStats *history;
   MoveStats *counterMoves;
+  HistoryStats *history;
   PawnEntry *pawnTable;
   MaterialEntry *materialTable;
   CounterMoveHistoryStats *counterMoveHistory;

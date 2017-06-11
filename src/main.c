@@ -29,6 +29,8 @@
 #include "tt.h"
 #include "uci.h"
 #include "tbprobe.h"
+#include "tzbook.h"
+#include "uci.h"
 
 int main(int argc, char **argv)
 {
@@ -43,7 +45,7 @@ int main(int argc, char **argv)
   endgames_init();
   threads_init();
   options_init();
-
+  initBook(option_string_value(OPT_BOOKPATH));
   uci_loop(argc, argv);
 
   threads_exit();

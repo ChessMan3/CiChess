@@ -64,6 +64,8 @@ typedef void (*OnChange)(Option *);
 #define OPT_SYZ_PROBE_LIMIT 24
 #define OPT_LARGE_PAGES     25
 #define OPT_NUMA            26
+#define OPT_BOOKMOVE2PROB   27
+#define OPT_BOOKPATH        28
 
 struct Option {
   char *name;
@@ -79,6 +81,7 @@ void options_init(void);
 void options_free(void);
 void print_options(void);
 int option_value(int opt);
+char *option_def_string(int opt);
 char *option_string_value(int opt);
 void option_set_value(int opt, int value);
 int option_set_by_name(char *name, char *value);

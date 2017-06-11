@@ -36,6 +36,7 @@
 #include "thread.h"
 #include "tt.h"
 #include "uci.h"
+#include "tzbook.h"
 
 // 'On change' actions, triggered by an option's value change
 static void on_clear_hash(Option *opt)
@@ -74,6 +75,16 @@ static void on_tb_path(Option *opt)
 {
   TB_init(opt->val_string);
 }
+
+void on_brainbook_path(Option *opt) 
+{ 
+	initBook(opt->val_string); 
+}
+void on_book_move2_prob(Option *opt) 
+{ 
+	set_book_move2_probability(opt); 
+}
+
 
 static void on_largepages(Option *opt)
 {
@@ -114,6 +125,8 @@ static Option options_map[] = {
   { "SyzygyProbeLimit", OPT_TYPE_SPIN, 6, 0, 6, NULL, NULL, 0, NULL },
   { "LargePages", OPT_TYPE_CHECK, 1, 0, 0, NULL, on_largepages, 0, NULL },
   { "NUMA", OPT_TYPE_STRING, 0, 0, 0, "all", on_numa, 0, NULL },
+  { "Book Move2 Probability", OPT_TYPE_SPIN, 0, 0, 100, NULL, on_book_move2_prob, 0, NULL },
+  { "BookPath", OPT_TYPE_STRING, 0, 0, 0, "<empty>", on_brainbook_path, 0, NULL },
   { NULL }
 };
 

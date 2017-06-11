@@ -33,13 +33,12 @@
 INLINE void hs_update(HistoryStats hs, int c, Move m, int v)
 {
   int w = v >= 0 ? v : -v;
-  const int D = 324;
-  
-  assert(w <= D); // Consistency check for below formula
-
+  if (w >= 324)
+     return;
+ 
   m &= 4095;
-  hs[c][m] -= hs[c][m] * w / D;
-  hs[c][m] += v * 32;
+  hs[c][m] -= hs[c][m] * w / 324;
+  hs[c][m] += ((int)v) * 32;
 }
  
 INLINE int hs_get(HistoryStats hs, int c, Move m)
@@ -50,12 +49,11 @@ INLINE int hs_get(HistoryStats hs, int c, Move m)
 INLINE void cms_update(CounterMoveStats cms, Piece pc, Square to, int v)
 {
   int w = v >= 0 ? v : -v;
-  const int D = 936;
-  
-  assert(w <= D);
+  if (w >= 324)
+    return;
 
-  cms[pc][to] -= cms[pc][to] * w / D;
-  cms[pc][to] += v * 32;
+  cms[pc][to] -= cms[pc][to] * w / 936;
+  cms[pc][to] += ((int)v) * 32;
 }
 
 #define ST_MAIN_SEARCH             0
