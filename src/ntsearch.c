@@ -28,7 +28,7 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
   Depth extension, newDepth;
   Value bestValue, value, ttValue, eval;
   int ttHit, inCheck, givesCheck, singularExtensionNode, improving;
-  int captureOrPromotion, doFullDepthSearch, moveCountPruning, skipQuiets, ttCapture;
+  int captureOrPromotion, doFullDepthSearch, moveCountPruning, skipQuiets;
   Piece moved_piece;
   int moveCount, quietCount;
 
@@ -216,7 +216,7 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
   if (   !PvNode
       &&  eval >= beta
       && (ss->staticEval >= beta - 35 * (depth / ONE_PLY - 6) || depth >= 13 * ONE_PLY)
-      &&  pos->maxPly + 3 * ONE_PLY > pos->rootDepth
+      && pos->maxPly + 3 * ONE_PLY > pos->rootDepth
       &&  pos_non_pawn_material(pos_stm())) {
 
     ss->currentMove = MOVE_NULL;
@@ -318,8 +318,7 @@ moves_loop: // When in check search starts from here.
                          && !excludedMove // Recursive singular search is not allowed
                          && (tte_bound(tte) & BOUND_LOWER)
                          &&  tte_depth(tte) >= depth - 3 * ONE_PLY;
-   skipQuiets = 0;
-   ttCapture = 0;   
+   skipQuiets = 0;			 
 
   // Step 11. Loop through moves
   // Loop through all pseudo-legal moves until no moves remain or a beta cutoff occurs
@@ -402,11 +401,7 @@ moves_loop: // When in check search starts from here.
              &&  see_test(pos, move, 0))
        extension = ONE_PLY;
  
-    else if (   far_advanced_pawn_push(pos, move)
-			 && pos_non_pawn_material(pos_stm()) <=  RookValueMg)
-	   extension = ONE_PLY;
- 
-    // Calculate new depth for this move
+    // Update the current move (this must be done after singular extension search)
     newDepth = depth - ONE_PLY + extension;
 
     // Step 13. Pruning at shallow depth
@@ -464,11 +459,7 @@ moves_loop: // When in check search starts from here.
       ss->moveCount = --moveCount;
       continue;
     }
-	
-    if (moveCount == 1 && captureOrPromotion && ttMove)
-        ttCapture = 1;
 
-    // Update the current move (this must be done after singular extension search)
     ss->currentMove = move;
     ss->counterMoves = &(*pos->counterMoveHistory)[moved_piece][to_sq(move)];
 
@@ -485,11 +476,6 @@ moves_loop: // When in check search starts from here.
       if (captureOrPromotion)
         r -= r ? ONE_PLY : DEPTH_ZERO;
       else {
-		    
-        // Increase reduction if ttMove is a capture
-        if (ttCapture)
-            r += ONE_PLY;
-		
         // Increase reduction for cut nodes.
         if (cutNode)
           r += 2 * ONE_PLY;
