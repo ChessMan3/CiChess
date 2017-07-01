@@ -760,7 +760,7 @@ Value evaluate(const Pos *pos)
   v = (mg_value(score) + eg_value(score)) / 2;
   if (abs(v) > LazyThreshold)
      return pos_stm() == WHITE ? v : -v;
-  
+
   // Initialize attack and king safety bitboards.
   evalinfo_init(pos, &ei, WHITE);
   evalinfo_init(pos, &ei, BLACK);
