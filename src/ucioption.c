@@ -87,15 +87,20 @@ static void on_largepages(Option *opt)
 #endif
 
 static Option options_map[] = {
-  { "Debug Log File", OPT_TYPE_STRING, 0, 0, 0, "<empty>", on_logger, 0, NULL },
+  { "Debug Log File", OPT_TYPE_STRING, 0, 0, 0, "sf.log", on_logger, 0, NULL },
   { "Contempt", OPT_TYPE_SPIN, 0, -100, 100, NULL, NULL, 0, NULL },
   { "Threads", OPT_TYPE_SPIN, 1, 1, 512, NULL, on_threads, 0, NULL },
   { "Hash", OPT_TYPE_SPIN, 16, 1, MAXHASHMB, NULL, on_hash_size, 0, NULL },
   { "Clear Hash", OPT_TYPE_BUTTON, 0, 0, 0, NULL, on_clear_hash, 0, NULL },
+  { "Fast_Play", OPT_TYPE_CHECK, 1, 0, 1, NULL, on_clear_hash, 0, NULL },
+  { "Hide Info", OPT_TYPE_CHECK, 1, 0, 1, NULL, on_clear_hash, 0, NULL },
+  { "Study", OPT_TYPE_CHECK, 0, 0, 0, NULL, on_clear_hash, 0, NULL },
+  { "UCI_Limit_Strength", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
+  { "UCI_Elo",OPT_TYPE_SPIN, 1200, 1200, 2800, NULL, NULL, 0, NULL },
+  { "UCI_Elo_Delay", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
   { "Ponder", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
   { "MultiPV", OPT_TYPE_SPIN, 1, 1, 500, NULL, NULL, 0, NULL },
   { "Repetition Fix", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
-  { "Skill Level", OPT_TYPE_SPIN, 20, 0, 20, NULL, NULL, 0, NULL },
   { "Move Overhead", OPT_TYPE_SPIN, 30, 0, 5000, NULL, NULL, 0, NULL },
   { "Minimum Thinking Time", OPT_TYPE_SPIN, 20, 0, 5000, NULL, NULL, 0, NULL },
   { "Slow Mover", OPT_TYPE_SPIN, 89, 10, 1000, NULL, NULL, 0, NULL },
@@ -105,7 +110,7 @@ static Option options_map[] = {
   { "SyzygyProbeDepth", OPT_TYPE_SPIN, 1, 1, 100, NULL, NULL, 0, NULL },
   { "Syzygy50MoveRule", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
   { "SyzygyProbeLimit", OPT_TYPE_SPIN, 6, 0, 6, NULL, NULL, 0, NULL },
-  { "LargePages", OPT_TYPE_CHECK, 1, 0, 0, NULL, on_largepages, 0, NULL },
+  { "LargePages", OPT_TYPE_CHECK, 0, 0, 0, NULL, on_largepages, 0, NULL },
   { "NUMA", OPT_TYPE_STRING, 0, 0, 0, "all", on_numa, 0, NULL },
   { NULL }
 };
