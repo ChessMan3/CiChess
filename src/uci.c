@@ -326,7 +326,11 @@ void uci_loop(int argc, char **argv)
       fflush(stdout);
     }
     else if (strcmp(token, "go") == 0)        go(&pos, str);
-    else if (strcmp(token, "position") == 0)  position(&pos, str);
+    else if (strcmp(token, "position") == 0) {
+		position(&pos, str);
+		if (option_value(OPT_CLEAN_SEARCH))
+			search_clear();
+		} 
     else if (strcmp(token, "setoption") == 0) setoption(str);
 
     // Additional custom non-UCI commands, useful for debugging

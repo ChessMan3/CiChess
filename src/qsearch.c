@@ -126,7 +126,7 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
         && !givesCheck
         &&  futilityBase > -VALUE_KNOWN_WIN
         && type_of_m(move) == NORMAL) {
-
+      
       futilityValue = futilityBase + PieceValue[EG][piece_on(to_sq(move))];
 
       if (futilityValue <= alpha) {
@@ -148,7 +148,7 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
 
     // Don't search moves with negative SEE values
     if (  (!InCheck || evasionPrunable)
-        && (depth != DEPTH_ZERO || type_of_m(move) != PROMOTION)
+        &&  (depth != DEPTH_ZERO || type_of_m(move) != PROMOTION)
         &&  !see_test(pos, move, 0))
       continue;
 

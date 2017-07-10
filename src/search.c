@@ -359,6 +359,7 @@ void thread_search(Pos *pos)
   }
 
   int multiPV = option_value(OPT_MULTI_PV);
+if(option_value(OPT_TACTICALMODE)) multiPV=256;
 #if 0
   Skill skill(option_value(OPT_SKILL_LEVEL));
 
@@ -411,11 +412,10 @@ void thread_search(Pos *pos)
 
       // Reset aspiration window starting size
       if (pos->rootDepth >= 5 * ONE_PLY) {
-        Value prevScore = rm->move[PVIdx].previousScore;
-        delta1 = (prevScore < 0) ? (Value)((int)(8.0 + 0.1 * abs(prevScore))) : (Value)18;
-        delta2 = (prevScore > 0) ? (Value)((int)(8.0 + 0.1 * abs(prevScore))) : (Value)18;
-        alpha = max(prevScore - delta1,-VALUE_INFINITE);
-        beta  = min(prevScore + delta2, VALUE_INFINITE);
+		delta1 = (rm->move[PVIdx].previousScore < 0) ? (Value)((int)(8.0 + 0.1 * abs(rm->move[PVIdx].previousScore))) : (Value)18;
+		delta2 = (rm->move[PVIdx].previousScore > 0) ? (Value)((int)(8.0 + 0.1 * abs(rm->move[PVIdx].previousScore))) : (Value)18;       
+        alpha = max(rm->move[PVIdx].previousScore - delta1,-VALUE_INFINITE);
+        beta  = min(rm->move[PVIdx].previousScore + delta2, VALUE_INFINITE);
       }
 
       // Start with a small aspiration window and, in the case of a fail
@@ -454,7 +454,7 @@ void thread_search(Pos *pos)
         // re-search, otherwise exit the loop.
         if (bestValue <= alpha) {
           beta = (alpha + beta) / 2;
-          alpha = max(bestValue - delta1, -VALUE_INFINITE);
+		  alpha = max(bestValue - delta1, -VALUE_INFINITE);
 
           if (pos->thread_idx == 0) {
             mainThread.failedLow = 1;
@@ -467,7 +467,7 @@ void thread_search(Pos *pos)
           break;
 
         delta1 += delta1 / 4 + 5;
-        delta2 += delta2 / 4 + 5;
+		delta2 += delta2 / 4 + 5;
 
         assert(alpha >= -VALUE_INFINITE && beta <= VALUE_INFINITE);
       }
