@@ -124,6 +124,7 @@ static void easy_move_update(Pos *pos, Move *newPv)
 }
 
 static Value DrawValue[2];
+int variety;
 //static CounterMoveHistoryStats CounterMoveHistory;
 
 static Value search_PV(Pos *pos, Stack *ss, Value alpha, Value beta, Depth depth);
@@ -244,6 +245,7 @@ void mainthread_search(void)
   Pos *pos = Threads.pos[0];
   int us = pos_stm();
   time_init(us, pos_game_ply());
+  variety = option_value(OPT_VARIETY);
   char buf[16];
 
   int contempt = option_value(OPT_CONTEMPT) * PawnValueEg / 100; // From centipawns
@@ -359,6 +361,8 @@ void thread_search(Pos *pos)
   }
 
   int multiPV = option_value(OPT_MULTI_PV);
+   if(option_value(OPT_PV16)) multiPV=16;
+   if(option_value(OPT_PV256)) multiPV=256;
 #if 0
   Skill skill(option_value(OPT_SKILL_LEVEL));
 

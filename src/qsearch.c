@@ -178,6 +178,10 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
 
     assert(value > -VALUE_INFINITE && value < VALUE_INFINITE);
 
+	//Add a little variety to play
+    if (variety && value + (variety * 1 * PawnValueEg / 100) >= 0 )
+    value += rand() % (variety * 1);
+
     // Check for a new best move
     if (value > bestValue) {
       bestValue = value;
