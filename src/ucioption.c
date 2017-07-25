@@ -87,8 +87,8 @@ static void on_largepages(Option *opt)
 #endif
 
 static Option options_map[] = {
-  { "Wide Search", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
-  { "Clean Search", OPT_TYPE_BUTTON, 0, 0, 0, NULL, NULL, 0, NULL },
+  { "Tactical Mode", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
+  { "Clean Search", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
   { "Razoring", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
   { "Futility", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
   { "Pruning", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
@@ -114,8 +114,6 @@ static Option options_map[] = {
   { "SyzygyProbeLimit", OPT_TYPE_SPIN, 6, 0, 6, NULL, NULL, 0, NULL },
   { "LargePages", OPT_TYPE_CHECK, 1, 0, 0, NULL, on_largepages, 0, NULL },
   { "Variety", OPT_TYPE_SPIN, 0, 0, 40, NULL, NULL, 0, NULL },
-  { "PV16", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
-  { "PV256", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
   { "NUMA", OPT_TYPE_STRING, 0, 0, 0, "all", on_numa, 0, NULL },
   { NULL }
 };

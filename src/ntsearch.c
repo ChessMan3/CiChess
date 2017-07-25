@@ -518,11 +518,11 @@ moves_loop: // When in check search starts from here.
         // Decrease/increase reduction for moves with a good/bad history.
         r = max(DEPTH_ZERO, (r / ONE_PLY - ss->history / 20000) * ONE_PLY);
       }
-
-	  // The "Wide Search" option looks Engine to look at more positions per search depth, but Engine will play
-      // weaker overall.
-      if ( ( ss->ply < depth / 2 - ONE_PLY) && option_value(OPT_WIDESEARCH) )
-       r = DEPTH_ZERO;
+	  // The "Tactcal Mode" option looks Engine to look at more positions per search depth, but Engine will play
+	  // weaker overall.  It also sets the "MultiPV" option to 256 to allow Engine to look at more nodes per
+	  // depth and may help in analysis.
+	  if ( ( ss->ply < depth / 2 - ONE_PLY) && option_value(OPT_TACTICALMODE) )
+		r = DEPTH_ZERO;
 
       Depth d = max(newDepth - r, ONE_PLY);
 
