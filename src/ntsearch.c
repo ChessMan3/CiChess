@@ -215,9 +215,9 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
   // Step 8. Null move search with verification search (is omitted in PV nodes)
   if ( option_value(OPT_NULLMOVE) && !PvNode
       &&  eval >= beta
-      && (ss->staticEval >= beta - 35 * (depth / ONE_PLY - 6) || depth >= 13 * ONE_PLY)
+      && (ss->staticEval >= beta - (int)(320 * log(depth / ONE_PLY)) + 500)
       &&  pos->maxPly + 3 * ONE_PLY > pos->rootDepth
-      &&  pos_non_pawn_material(pos_stm())) {
+      &&  pos_non_pawn_material(pos_stm()) > (depth > 12 * ONE_PLY) * BishopValueMg) {
 
     ss->currentMove = MOVE_NULL;
     ss->counterMoves = NULL;
@@ -225,7 +225,7 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
     assert(eval - beta >= 0);
 
     // Null move dynamic reduction based on depth and value
-    Depth R = ((823 + 67 * depth / ONE_PLY) / 256 + min((eval - beta) / PawnValueMg, 3)) * ONE_PLY;
+    Depth R = ((int)(2.6 * log(depth / ONE_PLY)) + min((eval - beta) / (Value)170, 3)) * ONE_PLY;
 
     do_null_move(pos);
     ss->endMoves = (ss-1)->endMoves;
@@ -240,10 +240,10 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
       if (nullValue >= VALUE_MATE_IN_MAX_PLY)
          nullValue = beta;
 
-      if (depth < 12 * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
+      if (abs(beta) < VALUE_KNOWN_WIN)
          return nullValue;
 
-      // Do verification search at high depths
+      // Do verification search when searching for mate
       ss->skipEarlyPruning = 1;
       Value v = depth-R < ONE_PLY ? qsearch_NonPV_false(pos, ss, beta-1, DEPTH_ZERO)
                                   :  search_NonPV(pos, ss, beta-1, depth-R, 0);
@@ -518,11 +518,11 @@ moves_loop: // When in check search starts from here.
         // Decrease/increase reduction for moves with a good/bad history.
         r = max(DEPTH_ZERO, (r / ONE_PLY - ss->history / 20000) * ONE_PLY);
       }
-
-	  // The "Wide Search" option looks Engine to look at more positions per search depth, but Engine will play
-      // weaker overall.
-      if ( ( ss->ply < depth / 2 - ONE_PLY) && option_value(OPT_WIDESEARCH) )
-       r = DEPTH_ZERO;
+	  // The "Tactcal Mode" option looks Engine to look at more positions per search depth, but Engine will play
+	  // weaker overall.  It also sets the "MultiPV" option to 256 to allow Engine to look at more nodes per
+	  // depth and may help in analysis.
+	  if ( ( ss->ply < depth / 2 - ONE_PLY) && option_value(OPT_TACTICALMODE) )
+		r = DEPTH_ZERO;
 
       Depth d = max(newDepth - r, ONE_PLY);
 

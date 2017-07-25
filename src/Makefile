@@ -25,7 +25,7 @@
 UNAME = $(shell uname)
 
 ### Executable name
-EXE = cfish
+EXE = corcfishextended
 
 ### Installation dir definitions
 PREFIX = /usr/local
@@ -72,7 +72,7 @@ popcnt = no
 sse = no
 pext = no
 native = no
-numa = no
+numa = yes
 
 ### 2.2 Architecture specific
 

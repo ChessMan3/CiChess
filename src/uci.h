@@ -37,7 +37,7 @@ typedef void (*OnChange)(Option *);
 #define OPT_TYPE_STRING   3
 #define OPT_TYPE_DISABLED 4
 
-#define OPT_WIDESEARCH     0
+#define OPT_TACTICALMODE    0
 #define OPT_CLEAN_SEARCH    1
 #define OPT_RAZORING        2
 #define OPT_FUTILITY        3
@@ -64,9 +64,7 @@ typedef void (*OnChange)(Option *);
 #define OPT_SYZ_PROBE_LIMIT 24
 #define OPT_LARGE_PAGES     25
 #define OPT_VARIETY         26
-#define OPT_PV16            27
-#define OPT_PV256           28
-#define OPT_NUMA            29
+#define OPT_NUMA            27
 
 struct Option {
   char *name;
