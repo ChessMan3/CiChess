@@ -169,8 +169,7 @@ static const int KingAttackWeights[8] = { 0, 0, 78, 56, 45, 11 };
 #define BishopCheck       435
 #define KnightCheck       790
 
-// Thresholds for lazy and space evaluation
-#define LazyThreshold 1500
+// Threshold for space evaluation
 #define SpaceThreshold 12222
 
 
@@ -758,11 +757,6 @@ Value evaluate(const Pos *pos)
   // Probe the pawn hash table
   ei.pe = pawn_probe(pos);
   score += ei.pe->score;
-
-  // Early exit if score is high
-  v = (mg_value(score) + eg_value(score)) / 2;
-  if (abs(v) > LazyThreshold)
-    return pos_stm() == WHITE ? v : -v;
 
   // Initialize attack and king safety bitboards.
   evalinfo_init(pos, &ei, WHITE);
