@@ -7,7 +7,8 @@
 #define BMI2_PLAIN
 //#define BMI2_FANCY
 #else
-#define MAGIC_PLAIN
+#define MAGIC_BLACK
+//#define MAGIC_PLAIN
 //#define MAGIC_FANCY
 #endif
 
