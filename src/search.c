@@ -65,14 +65,12 @@ static const int razor_margin[4] = { 0, 570, 603, 554 };
 // Futility and reductions lookup tables, initialized at startup
 static int FutilityMoveCounts[2][16]; // [improving][depth]
 static int Reductions[2][2][128][64];  // [pv][improving][depth][moveNumber]
-
 static const int CounterMovePruneThreshold = 0;
 
 INLINE Depth reduction(int i, Depth d, int mn, const int NT)
 {
   return Reductions[NT][i][min(d / ONE_PLY, 127)][min(mn, 63)] * ONE_PLY;
 }
-
 // History and stats update bonus, based on depth
 Value stat_bonus(Depth depth)
 {
@@ -375,6 +373,7 @@ void thread_search(Pos *pos)
   }
 
   int multiPV = option_value(OPT_MULTI_PV);
+if(option_value(OPT_CORRESPONDENCEMODE)) multiPV=256;
 #if 0
   Skill skill(option_value(OPT_SKILL_LEVEL));
 
@@ -437,7 +436,7 @@ void thread_search(Pos *pos)
         delta2 = (prevScore > 0) ? (Value)((int)(8.0 + 0.1 * abs(prevScore))) : (Value)18;
         alpha = max(prevScore - delta1,-VALUE_INFINITE);
         beta  = min(prevScore + delta2, VALUE_INFINITE);
-      }
+	  }
 
       // Start with a small aspiration window and, in the case of a fail
       // high/low, re-search with a bigger window until we're not failing
