@@ -30,7 +30,7 @@
 
 // Version number. If Version is left empty, then compile date in the format
 // DD-MM-YY and show in engine_info.
-char Version[] = "1.8 Black magic 120817";
+char Version[] = "1.8 BM 120817";
 
 #ifndef __WIN32__
 pthread_mutex_t io_mutex = PTHREAD_MUTEX_INITIALIZER;
