@@ -87,16 +87,9 @@ static void on_largepages(Option *opt)
 #endif
 
 static Option options_map[] = {
-  { "Wide Search", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
-  { "Clean Search", OPT_TYPE_BUTTON, 0, 0, 0, NULL, NULL, 0, NULL },
-  { "Razoring", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
-  { "Futility", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
-  { "Pruning", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
-  { "NullMove", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
-  { "ProbCut", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
   { "Debug Log File", OPT_TYPE_STRING, 0, 0, 0, "<empty>", on_logger, 0, NULL },
   { "Contempt", OPT_TYPE_SPIN, 0, -100, 100, NULL, NULL, 0, NULL },
-  { "Threads", OPT_TYPE_SPIN, 1, 1, 512, NULL, on_threads, 0, NULL },
+  { "Threads", OPT_TYPE_SPIN, 1, 1, MAX_THREADS, NULL, on_threads, 0, NULL },
   { "Hash", OPT_TYPE_SPIN, 16, 1, MAXHASHMB, NULL, on_hash_size, 0, NULL },
   { "Clear Hash", OPT_TYPE_BUTTON, 0, 0, 0, NULL, on_clear_hash, 0, NULL },
   { "Ponder", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
@@ -104,8 +97,6 @@ static Option options_map[] = {
   { "Repetition Fix", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
   { "Skill Level", OPT_TYPE_SPIN, 20, 0, 20, NULL, NULL, 0, NULL },
   { "Move Overhead", OPT_TYPE_SPIN, 30, 0, 5000, NULL, NULL, 0, NULL },
-  { "Minimum Thinking Time", OPT_TYPE_SPIN, 20, 0, 5000, NULL, NULL, 0, NULL },
-  { "Slow Mover", OPT_TYPE_SPIN, 89, 10, 1000, NULL, NULL, 0, NULL },
   { "nodestime", OPT_TYPE_SPIN, 0, 0, 10000, NULL, NULL, 0, NULL },
   { "UCI_Chess960", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
   { "SyzygyPath", OPT_TYPE_STRING, 0, 0, 0, "<empty>", on_tb_path, 0, NULL },
@@ -113,9 +104,6 @@ static Option options_map[] = {
   { "Syzygy50MoveRule", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
   { "SyzygyProbeLimit", OPT_TYPE_SPIN, 6, 0, 6, NULL, NULL, 0, NULL },
   { "LargePages", OPT_TYPE_CHECK, 1, 0, 0, NULL, on_largepages, 0, NULL },
-  { "Variety", OPT_TYPE_SPIN, 0, 0, 40, NULL, NULL, 0, NULL },
-  { "PV16", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
-  { "PV256", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
   { "NUMA", OPT_TYPE_STRING, 0, 0, 0, "all", on_numa, 0, NULL },
   { NULL }
 };

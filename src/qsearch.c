@@ -118,8 +118,8 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
     assert(move_is_ok(move));
 
     givesCheck = gives_check(pos, ss, move);
-	
-	moveCount++;
+
+    moveCount++;
 
     // Futility pruning
     if (   !InCheck
@@ -143,7 +143,7 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
 
     // Detect non-capture evasions that are candidates to be pruned
     evasionPrunable =    InCheck
-                     &&  (depth != DEPTH_ZERO || moveCount > 2)	
+                     && (depth != DEPTH_ZERO || moveCount > 2)
                      &&  bestValue > VALUE_MATED_IN_MAX_PLY
                      && !is_capture(pos, move);
 
@@ -157,8 +157,7 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
     prefetch(tt_first_entry(key_after(pos, move)));
 
     // Check for legality just before making the move
-    if (!is_legal(pos, move))
-    {
+    if (!is_legal(pos, move)) {
       moveCount--;
       continue;
     }
@@ -177,10 +176,6 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
     undo_move(pos, move);
 
     assert(value > -VALUE_INFINITE && value < VALUE_INFINITE);
-
-	//Add a little variety to play
-    if (variety && value + (variety * 1 * PawnValueEg / 100) >= 0 )
-    value += rand() % (variety * 1);
 
     // Check for a new best move
     if (value > bestValue) {
