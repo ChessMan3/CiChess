@@ -25,7 +25,7 @@
 UNAME = $(shell uname)
 
 ### Executable name
-EXE = CFish
+EXE = cfish
 
 ### Installation dir definitions
 PREFIX = /usr/local
@@ -140,7 +140,7 @@ endif
 
 ### 3.1 Selecting compiler (default = gcc)
 
-CFLAGS += -Wall -std=c11 $(EXTRACFLAGS)
+CFLAGS += -flto -Wall -std=c11 $(EXTRACFLAGS)
 DEPENDFLAGS += -std=c11
 LDFLAGS += $(EXTRALDFLAGS) -lm
 

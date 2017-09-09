@@ -108,7 +108,7 @@ void print_engine_info(int to_uci)
 {
   char my_date[64];
 
-  printf("CFish_BM %s", Version);
+  printf("Cfish %s", Version);
 
   if (strlen(Version) == 0) {
     int day, month, year;
