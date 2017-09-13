@@ -170,8 +170,8 @@ static const int KingAttackWeights[8] = { 0, 0, 78, 56, 45, 11 };
 #define KnightCheck       790
 
 // Threshold for lazy and space evaluation
-#define LazyEval 1500
-#define SpaceThreshold 12222
+static const Value LazyEval = (Value)(1500);
+static const Value SpaceThreshold = (Value)(12222);
 
 
 // eval_init() initializes king and attack bitboards for a given color
@@ -751,7 +751,6 @@ Value evaluate(const Pos *pos)
   assert(!pos_checkers());
 
   Score mobility[2] = { SCORE_ZERO, SCORE_ZERO };
-  Value v;
   EvalInfo ei;
 
   // Probe the material hash table
@@ -805,19 +804,19 @@ Value evaluate(const Pos *pos)
               - evaluate_space(pos, &ei, BLACK);
 
   // Evaluate position potential for the winning side
-  //  score += evaluate_initiative(pos, ei.pi->asymmetry, eg_value(score));
-  int eg = eg_value(score);
-  eg += evaluate_initiative(pos, ei.pe->asymmetry, eg);
+    score += evaluate_initiative(pos, ei.pe->asymmetry, eg_value(score));
+  //int eg = eg_value(score);
+  //eg += evaluate_initiative(pos, ei.pe->asymmetry, eg);
 
   // Evaluate scale factor for the winning side
-  //int sf = evaluate_scale_factor(pos, &ei, eg_value(score));
-  int sf = evaluate_scale_factor(pos, &ei, eg);
+  int sf = evaluate_scale_factor(pos, &ei, eg_value(score));
+  //int sf = evaluate_scale_factor(pos, &ei, eg);
 
   // Interpolate between a middlegame and a (scaled by 'sf') endgame score
-  //  Value v =  mg_value(score) * ei.me->gamePhase
-  //           + eg_value(score) * (PHASE_MIDGAME - ei.me->gamePhase) * sf / SCALE_FACTOR_NORMAL;
-  v =  mg_value(score) * ei.me->gamePhase
-     + eg * (PHASE_MIDGAME - ei.me->gamePhase) * sf / SCALE_FACTOR_NORMAL;
+    Value v =  mg_value(score) * ei.me->gamePhase
+             + eg_value(score) * (PHASE_MIDGAME - ei.me->gamePhase) * sf / SCALE_FACTOR_NORMAL;
+  //Value v =  mg_value(score) * ei.me->gamePhase
+   //  + eg * (PHASE_MIDGAME - ei.me->gamePhase) * sf / SCALE_FACTOR_NORMAL;
 
   v /= PHASE_MIDGAME;
 
