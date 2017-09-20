@@ -14,7 +14,7 @@ Value search_PV(Pos *pos, Stack *ss, Value alpha, Value beta, Depth depth)
 Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
 #endif
 {
-  int rootNode = PvNode && (ss-1)->ply == 0;
+  int rootNode = PvNode && ss->ply == 0;
 
   assert(-VALUE_INFINITE <= alpha && alpha < beta && beta <= VALUE_INFINITE);
   assert(PvNode || (alpha == beta - 1));
@@ -106,7 +106,8 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
       && tte_depth(tte) >= depth
       && ttValue != VALUE_NONE // Possible in case of TT access race.
       && (ttValue >= beta ? (tte_bound(tte) & BOUND_LOWER)
-                          : (tte_bound(tte) & BOUND_UPPER))) {
+                          : (tte_bound(tte) & BOUND_UPPER)))
+  {
     // If ttMove is quiet, update move sorting heuristics on TT hit.
     if (ttMove) {
       if (ttValue >= beta) {
@@ -145,8 +146,8 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
 
         int drawScore = TB_UseRule50 ? 1 : 0;
 
-        value =  v < -drawScore ? -VALUE_MATE + MAX_PLY + ss->ply
-               : v >  drawScore ?  VALUE_MATE - MAX_PLY - ss->ply
+        value =  v < -drawScore ? -VALUE_MATE + MAX_PLY + 1 + ss->ply
+               : v >  drawScore ?  VALUE_MATE - MAX_PLY - 1 - ss->ply
                                 :  VALUE_DRAW + 2 * v * drawScore;
 
         int b =  v < -drawScore ? BOUND_UPPER
@@ -156,9 +157,8 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
             || (b == BOUND_LOWER ? value >= beta : value <= alpha))
         {
           tte_save(tte, posKey, value_to_tt(value, ss->ply), b,
-                 min(DEPTH_MAX - ONE_PLY, depth + 6 * ONE_PLY),
-                 0, VALUE_NONE, tt_generation());
-
+                   min(DEPTH_MAX - ONE_PLY, depth + 6 * ONE_PLY), 0,
+                   VALUE_NONE, tt_generation());
           return value;
         }
 
@@ -202,8 +202,8 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
   // Step 6. Razoring (skipped when in check)
   if (   !PvNode
       &&  depth < 4 * ONE_PLY
-      &&  eval + razor_margin[depth / ONE_PLY] <= alpha) {
-
+      &&  eval + razor_margin[depth / ONE_PLY] <= alpha)
+  {
     if (depth <= ONE_PLY)
       return qsearch_NonPV_false(pos, ss, alpha, DEPTH_ZERO);
 
@@ -225,8 +225,8 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
   if (   !PvNode
       &&  eval >= beta
       && (ss->staticEval >= beta - 35 * (depth / ONE_PLY - 6) || depth >= 13 * ONE_PLY)
-      &&  pos_non_pawn_material(pos_stm())) {
-
+      &&  pos_non_pawn_material(pos_stm()))
+  {
     assert(eval - beta >= 0);
 
     // Null move dynamic reduction based on depth and value
@@ -268,8 +268,8 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
   // much above beta, we can (almost) safely prune the previous move.
   if (   !PvNode
       &&  depth >= 5 * ONE_PLY
-      &&  abs(beta) < VALUE_MATE_IN_MAX_PLY) {
-
+      &&  abs(beta) < VALUE_MATE_IN_MAX_PLY)
+  {
     Value rbeta = min(beta + 200, VALUE_INFINITE);
     Depth rdepth = depth - 4 * ONE_PLY;
 
@@ -423,8 +423,7 @@ moves_loop: // When in check search starts from here.
       if (   !captureOrPromotion
           && !givesCheck
           && (  !advanced_pawn_push(pos, move)
-              || pos_non_pawn_material(WHITE) + pos_non_pawn_material(BLACK) >= 5000)
-             )
+              || pos_non_pawn_material(WHITE) + pos_non_pawn_material(BLACK) >= 5000))
       {
         // Move count based pruning
         if (moveCountPruning) {

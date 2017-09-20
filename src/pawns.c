@@ -28,11 +28,11 @@
 #define V(v) ((Value)(v))
 #define S(mg, eg) make_score(mg, eg)
 
-// Isolated pawn penalty by opposed flag
-static const Score Isolated[2] = { S(27, 30), S(13, 18) };
+// Isolated pawn penalty
+static const Score Isolated = S(13, 18);
 
-// Backward pawn penalty by opposed flag
-static const Score Backward[2] = { S(40, 26), S(24, 12) };
+// Backward pawn penalty
+static const Score Backward = S(24, 12);
 
 // Connected pawn bonus by opposed, phalanx, #support and rank
 static Score Connected[2][2][3][8];
@@ -46,22 +46,24 @@ static const Score Lever[8] = {
   S(17, 16), S(33, 32), S(0, 0), S(0, 0)
 };
 
-  // Weakness of our pawn shelter in front of the king by [distance from edge][rank].
-  // RANK_1 = 0 is used for files where we have no pawns or our pawn is behind our king.
-static const Value ShelterWeakness[][(int)8 / 2][8] = {
-  { { V( 97), V(17), V( 9), V(44), V( 84), V( 87), V( 99) },
+// Weakness of our pawn shelter in front of the king by
+// [isKingFile][distance from edge][rank]. RANK_1 = 0 is used for
+// files where we have no pawns or our pawn is behind our king.
+static const Value ShelterWeakness[][4][8] = {
+  { { V( 97), V(17), V( 9), V(44), V( 84), V( 87), V( 99) }, // Not On King file
     { V(106), V( 6), V(33), V(86), V( 87), V(104), V(112) },
     { V(101), V( 2), V(65), V(98), V( 58), V( 89), V(115) },
     { V( 73), V( 7), V(54), V(73), V( 84), V( 83), V(111) } },
-  { { V(104), V(20), V( 6), V(27), V( 86), V( 93), V( 82) },
+  { { V(104), V(20), V( 6), V(27), V( 86), V( 93), V( 82) }, // On King file
     { V(123), V( 9), V(34), V(96), V(112), V( 88), V( 75) },
     { V(120), V(25), V(65), V(91), V( 66), V( 78), V(117) },
     { V( 81), V( 2), V(47), V(63), V( 94), V( 93), V(104) } }
 };
 
-  // Danger of enemy pawns moving toward our king by [type][distance from edge][rank].
-  // For the unopposed and blocked cases, RANK_1 = 0 is used when opponent has
-  // no pawn on the given file or their pawn is behind our king.
+// Danger of enemy pawns moving toward our king by
+// [type][distance from edge][rank]. For the unopposed and unblocked cases,
+// RANK_1 = 0 is used when opponent has no pawn on the given file or
+// their pawn is behind our king.
 static const Value StormDanger[][4][8] = {
   { { V( 0),  V(-290), V(-274), V(57), V(41) },  // BlockedByKing
     { V( 0),  V(  60), V( 144), V(39), V(13) },
@@ -103,7 +105,7 @@ INLINE Score pawn_evaluate(const Pos *pos, PawnEntry *e, const int Us)
   Bitboard ourPawns   = pieces_cp(Us, PAWN);
   Bitboard theirPawns = pieces_p(PAWN) ^ ourPawns;
 
-  e->passedPawns[Us] = e->pawnAttacksSpan[Us] = 0;
+  e->passedPawns[Us] = e->pawnAttacksSpan[Us] = e->weakUnopposed[Us] = 0;
   e->semiopenFiles[Us] = 0xFF;
   e->kingSquares[Us] = SQ_NONE;
   e->pawnAttacks[Us] = shift_bb(Right, ourPawns) | shift_bb(Left, ourPawns);
@@ -168,11 +170,15 @@ INLINE Score pawn_evaluate(const Pos *pos, PawnEntry *e, const int Us)
     if (supported | phalanx)
       score += Connected[opposed][!!phalanx][popcount(supported)][relative_rank_s(Us, s)];
 
-    else if (!neighbours)
-      score -= Isolated[opposed];
+    else if (!neighbours) {
+      score -= Isolated;
+      e->weakUnopposed[Us] += !opposed;
+    }
 
-    else if (backward)
-      score -= Backward[opposed];
+    else if (backward) {
+      score -= Backward;
+      e->weakUnopposed[Us] += !opposed;
+    }
 
     if (doubled && !supported)
       score -= Doubled;
