@@ -25,6 +25,7 @@
 #include "evaluate.h"
 #include "material.h"
 #include "pawns.h"
+#include "uci.h"
 
 // Struct EvalInfo contains various information computed and collected
 // by the evaluation functions.
@@ -433,10 +434,13 @@ INLINE Score evaluate_king(const Pos *pos, EvalInfo *ei, int Us)
     else if (b & other)
       score -= OtherCheck;
 
+    int KingSafe = option_value(OPT_KingSafe) * PawnValueEg / 2400; // From centipawns
+
+
     // Transform the kingDanger units into a Score, and subtract it from
     // the evaluation.
     if (kingDanger > 0)
-      score -= make_score(kingDanger * kingDanger / 4096, kingDanger / 16);
+      score -= make_score(kingDanger * KingSafe * kingDanger / 4096, kingDanger / 16);
   }
 
   // King tropism: firstly, find squares that we attack in the enemy king flank
