@@ -171,7 +171,7 @@ static const int KingAttackWeights[8] = { 0, 0, 78, 56, 45, 11 };
 #define KnightCheck       790
 
 // Thresholds for lazy and space evaluation
-#define LazyThreshold 1500
+#define LazyEval 1500
 #define SpaceThreshold 12222
 
 
@@ -736,6 +736,16 @@ INLINE int evaluate_scale_factor(const Pos *pos, EvalInfo *ei, Value eg)
   return sf;
 }
 
+Value lazy_eval(Value mg, Value eg) {
+
+    if (mg > LazyEval && eg > LazyEval)
+        return  LazyEval + ((mg + eg) / 2 - LazyEval) / 4;
+
+    else if (mg < -LazyEval && eg < -LazyEval)
+        return -LazyEval + ((mg + eg) / 2 + LazyEval) / 4;
+
+    return VALUE_ZERO;
+  }
 
 // evaluate() is the main evaluation function. It returns a static evaluation
 // of the position from the point of view of the side to move.
@@ -766,10 +776,11 @@ Value evaluate(const Pos *pos)
   ei.pe = pawn_probe(pos);
   score += ei.pe->score;
 
-  // Early exit if score is high
-  Value v = (mg_value(score) + eg_value(score)) / 2;
-  if (abs(v) > LazyThreshold)
-    return pos_stm() == WHITE ? v : -v;
+  // We have taken into account all cheap evaluation terms.
+  // If score exceeds a threshold return a lazy evaluation.
+  Value lazy = lazy_eval(mg_value(score), eg_value(score));
+  if (lazy)
+    return pos_stm() == WHITE ? lazy : -lazy;
 
   // Initialize attack and king safety bitboards.
   evalinfo_init(pos, &ei, WHITE);
@@ -809,7 +820,7 @@ Value evaluate(const Pos *pos)
   // Interpolate between a middlegame and a (scaled by 'sf') endgame score
   //  Value v =  mg_value(score) * ei.me->gamePhase
   //           + eg_value(score) * (PHASE_MIDGAME - ei.me->gamePhase) * sf / SCALE_FACTOR_NORMAL;
-  v =  mg_value(score) * ei.me->gamePhase
+  Value v =  mg_value(score) * ei.me->gamePhase
      + eg * (PHASE_MIDGAME - ei.me->gamePhase) * sf / SCALE_FACTOR_NORMAL;
 
   v /= PHASE_MIDGAME;
