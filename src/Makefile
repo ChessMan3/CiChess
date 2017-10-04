@@ -25,7 +25,7 @@
 UNAME = $(shell uname)
 
 ### Executable name
-EXE = cfish
+EXE = CiChess
 
 ### Installation dir definitions
 PREFIX = /usr/local
