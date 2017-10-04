@@ -29,7 +29,8 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
   Value bestValue, value, ttValue, eval, maxValue;
   int ttHit, inCheck, givesCheck, singularExtensionNode, improving;
   int captureOrPromotion, doFullDepthSearch, moveCountPruning, skipQuiets;
-  int ttCapture, goodCap;
+  int ttCapture, goodCap, pvExact;
+  
   Piece movedPiece;
   int moveCount, quietCount;
 
@@ -342,6 +343,7 @@ moves_loop: // When in check search starts from here.
   skipQuiets = 0;
   ttCapture = 0;
   goodCap = 0;
+  pvExact = PvNode && ttHit && tte_bound(tte) == BOUND_EXACT;
 
   // Step 11. Loop through moves
   // Loop through all pseudo-legal moves until no moves remain or a beta cutoff occurs
@@ -516,6 +518,10 @@ moves_loop: // When in check search starts from here.
       else {
         // Decrease reduction if opponent's move count is high
         if ((ss-1)->moveCount > 15)
+          r -= ONE_PLY;
+
+        // Decrease reduction for exact PV nodes
+        if (pvExact)
           r -= ONE_PLY;
 
         // Increase reduction if ttMove is a capture
