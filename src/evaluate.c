@@ -26,14 +26,14 @@
 #include "material.h"
 #include "pawns.h"
 
-static const Bitboard LongDiagonals = 0x8142241818244281ULL; // A1..H8 | H1..A8
-static const Bitboard Center    =     (FileDBB | FileEBB) & (Rank4BB | Rank5BB);
+#define Center      ((FileDBB | FileEBB) & (Rank4BB | Rank5BB))
 #define QueenSide   (FileABB | FileBBB | FileCBB | FileDBB)
 #define CenterFiles (FileCBB | FileDBB | FileEBB | FileFBB)
 #define KingSide    (FileEBB | FileFBB | FileGBB | FileHBB)
 
 static const Bitboard KingFlank[8] = {
-  QueenSide, QueenSide, QueenSide, CenterFiles, CenterFiles, KingSide, KingSide, KingSide
+  QueenSide, QueenSide, QueenSide, CenterFiles,
+  CenterFiles, KingSide, KingSide, KingSide
 };
 
 // Struct EvalInfo contains various information computed and collected
@@ -113,22 +113,22 @@ static const Score Outpost[][2] = {
 
 // RookOnFile[semiopen/open] contains bonuses for each rook when there is
 // no friendly pawn on the rook file.
-static const Score RookOnFile[2] = { S(21, 7), S(46, 21) };
+static const Score RookOnFile[2] = { S(20, 7), S(45, 20) };
 
 // ThreatByMinor/ByRook[attacked PieceType] contains bonuses according to
 // which piece type attacks which one. Attacks on lesser pieces which are
 // pawn defended are not considered.
 static const Score ThreatByMinor[8] = {
-  S(0, 0), S(0, 33), S(44, 43), S(48, 49), S(73, 102), S(50, 121)
+  S(0, 0), S(0, 33), S(45, 43), S(46, 47), S(72,107), S(48,118)
 };
 
 static const Score ThreatByRook[8] = {
-  S(0, 0), S(1, 24), S(40, 65), S(42, 60), S(-1, 32), S(33, 48)
+  S(0, 0), S(0, 25), S(40, 62), S(40, 59), S( 0, 34), S(35, 48)
 };
 
 // ThreatByKing[on one/on many] contains bonuses for King attacks on
 // pawns or pieces which are not pawn-defended.
-static const Score ThreatByKing[2] = { S(4, 60), S(9, 139) };
+static const Score ThreatByKing[2] = { S(3, 62), S(9, 138) };
 
 // Passed[mg/eg][Rank] contains midgame and endgame bonuses for passed pawns.
 // We don't use a Score because we process the two components independently.
@@ -157,7 +157,7 @@ static const Score OtherCheck          = S( 10, 10);
 static const Score CloseEnemies        = S(  7,  0);
 static const Score PawnlessFlank       = S( 20, 80);
 static const Score ThreatByHangingPawn = S( 71, 61);
-static const Score ThreatBySafePawn    = S(182,175);
+static const Score ThreatBySafePawn    = S(192,175);
 static const Score ThreatByRank        = S( 16,  3);
 static const Score Hanging             = S( 48, 27);
 static const Score WeakUnopposedPawn   = S(  5, 25);
@@ -181,7 +181,8 @@ static const int KingAttackWeights[8] = { 0, 0, 78, 56, 45, 11 };
 #define BishopCheck       435
 #define KnightCheck       790
 
-// Threshold for space evaluation
+// Thresholds for lazy and space evaluation
+#define LazyThreshold 1500
 #define SpaceThreshold 12222
 
 
@@ -280,18 +281,16 @@ INLINE Score evaluate_piece(const Pos *pos, EvalInfo *ei, Score *mobility,
           && (pieces_p(PAWN) & sq_bb(s + pawn_push(Us))))
         score += MinorBehindPawn;
 
-      if (Pt == BISHOP)
-      {
-      // Penalty for pawns on the same color square as the bishop
+      if (Pt == BISHOP) {
+        // Penalty for pawns on the same color square as the bishop
         score -= BishopPawns * pawns_on_same_color_squares(ei->pe, Us, s);
 
-      // Bonus for bishop on a long diagonal without pawns in the center
-      if (    (LongDiagonals & sq_bb(s))
-          && !(ei->attackedBy[Them][PAWN] & sq_bb(s))
-          && !(Center & PseudoAttacks[BISHOP][s] & pieces_p(PAWN)))
-        score += LongRangedBishop;
+        // Bonus for bishop on a long diagonal which can "see" both center
+        // squares
+        if (more_than_one(Center & (attacks_bb_bishop(s, pieces_p(PAWN)) | sq_bb(s))))
+          score += LongRangedBishop;
       }
-		
+
       // An important Chess960 pattern: A cornered bishop blocked by a friendly
       // pawn diagonally in front of it is a very serious problem, especially
       // when that pawn is also blocked.
@@ -755,7 +754,7 @@ Value evaluate(const Pos *pos)
   assert(!pos_checkers());
 
   Score mobility[2] = { SCORE_ZERO, SCORE_ZERO };
-  //Value v;
+  Value v;
   EvalInfo ei;
 
   // Probe the material hash table
@@ -776,7 +775,10 @@ Value evaluate(const Pos *pos)
   ei.pe = pawn_probe(pos);
   score += ei.pe->score;
 
-  Value v;
+  // Early exit if score is high
+  v = (mg_value(score) + eg_value(score)) / 2;
+  if (abs(v) > LazyThreshold)
+    return pos_stm() == WHITE ? v : -v;
 
   // Initialize attack and king safety bitboards.
   evalinfo_init(pos, &ei, WHITE);

@@ -29,8 +29,7 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
   Value bestValue, value, ttValue, eval, maxValue;
   int ttHit, inCheck, givesCheck, singularExtensionNode, improving;
   int captureOrPromotion, doFullDepthSearch, moveCountPruning, skipQuiets;
-  int ttCapture, goodCap, pvExact;
-  
+  int ttCapture, pvExact;
   Piece movedPiece;
   int moveCount, quietCount;
 
@@ -147,8 +146,8 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
 
         int drawScore = TB_UseRule50 ? 1 : 0;
 
-        value =  wdl < -drawScore ? -VALUE_MATE + MAX_PLY + 1 + ss->ply
-               : wdl >  drawScore ?  VALUE_MATE - MAX_PLY - 1 - ss->ply
+        value =  wdl < -drawScore ? -VALUE_MATE + MAX_MATE_PLY + 1 + ss->ply
+               : wdl >  drawScore ?  VALUE_MATE - MAX_MATE_PLY - 1 - ss->ply
                                   :  VALUE_DRAW + 2 * wdl * drawScore;
 
         int b =  wdl < -drawScore ? BOUND_UPPER
@@ -236,15 +235,13 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
   // Step 8. Null move search with verification search (is omitted in PV nodes)
   if (   !PvNode
       &&  eval >= beta
-      && (ss->staticEval >= beta - (int)(320 * log(depth / ONE_PLY)) + 500)
-      &&  pos->selDepth + 6 * ONE_PLY > pos->rootDepth
-      && !(depth > 12 * ONE_PLY && pos->moveList < 4)
-      &&  pos_non_pawn_material(pos_stm()) > (depth > 12 * ONE_PLY) * BishopValueMg)
+      && (ss->staticEval >= beta - 35 * (depth / ONE_PLY - 6) || depth >= 13 * ONE_PLY)
+      &&  pos_non_pawn_material(pos_stm()))
   {
     assert(eval - beta >= 0);
 
     // Null move dynamic reduction based on depth and value
-    Depth R = ((int)(2.6 * log(depth / ONE_PLY)) + min((eval - beta) / (Value)170, 3)) * ONE_PLY;
+    Depth R = ((823 + 67 * depth / ONE_PLY) / 256 + min((eval - beta) / PawnValueMg, 3)) * ONE_PLY;
 
     ss->currentMove = MOVE_NULL;
     ss->history = &(*pos->counterMoveHistory)[0][0];
@@ -263,10 +260,10 @@ Value search_NonPV(Pos *pos, Stack *ss, Value alpha, Depth depth, int cutNode)
       if (nullValue >= VALUE_MATE_IN_MAX_PLY)
          nullValue = beta;
 
-      if (abs(beta) < VALUE_KNOWN_WIN)
+      if (depth < 12 * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
          return nullValue;
 
-      // Do verification search when searching for mate
+      // Do verification search at high depths
       ss->skipEarlyPruning = 1;
       Value v = depth-R < ONE_PLY ? qsearch_NonPV_false(pos, ss, beta-1, DEPTH_ZERO)
                                   :  search_NonPV(pos, ss, beta-1, depth-R, 0);
@@ -342,7 +339,6 @@ moves_loop: // When in check search starts from here.
                          &&  tte_depth(tte) >= depth - 3 * ONE_PLY;
   skipQuiets = 0;
   ttCapture = 0;
-  goodCap = 0;
   pvExact = PvNode && ttHit && tte_bound(tte) == BOUND_EXACT;
 
   // Step 11. Loop through moves
@@ -486,14 +482,8 @@ moves_loop: // When in check search starts from here.
       continue;
     }
 
-    if (moveCount == 1 && captureOrPromotion)
-      {
-       if (move == ttMove)
-       ttCapture = 1;
-       else
-       if (to_sq(move) == to_sq((ss - 1)->currentMove))
-       goodCap = 1;
-      }
+    if (move == ttMove && captureOrPromotion)
+      ttCapture = 1;
 
     // Update the current move (this must be done after singular extension
     // search)
@@ -526,8 +516,6 @@ moves_loop: // When in check search starts from here.
 
         // Increase reduction if ttMove is a capture
         if (ttCapture)
-          r += ONE_PLY;
-        else if(goodCap && !inCheck && !givesCheck)
           r += ONE_PLY;
 
         // Increase reduction for cut nodes

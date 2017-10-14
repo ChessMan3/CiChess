@@ -64,13 +64,13 @@ static const int razor_margin[4] = { 0, 570, 603, 554 };
 
 // Futility and reductions lookup tables, initialized at startup
 static int FutilityMoveCounts[2][16]; // [improving][depth]
-static int Reductions[2][2][128][64];  // [pv][improving][depth][moveNumber]
+static int Reductions[2][2][64][64];  // [pv][improving][depth][moveNumber]
 
 static const int CounterMovePruneThreshold = 0;
 
 INLINE Depth reduction(int i, Depth d, int mn, const int NT)
 {
-  return Reductions[NT][i][min(d / ONE_PLY, 127)][min(mn, 63)] * ONE_PLY;
+  return Reductions[NT][i][min(d / ONE_PLY, 63)][min(mn, 63)] * ONE_PLY;
 }
 
 // History and stats update bonus, based on depth
@@ -161,9 +161,9 @@ static TimePoint lastInfoTime;
 void search_init(void)
 {
   for (int imp = 0; imp <= 1; imp++)
-    for (int d = 1; d < 128; ++d)
+    for (int d = 1; d < 64; ++d)
       for (int mc = 1; mc < 64; ++mc) {
-        double r = 0.2 * d * (1.0 - exp(-9.0 / d)) * log(mc);
+        double r = log(d) * log(mc) / 1.95;
 
         Reductions[NonPV][imp][d][mc] = ((int)lround(r));
         Reductions[PV][imp][d][mc] = max(Reductions[NonPV][imp][d][mc] - 1, 0);
@@ -351,7 +351,7 @@ void mainthread_search(void)
 
 void thread_search(Pos *pos)
 {
-  Value bestValue, alpha, beta, delta1, delta2;
+  Value bestValue, alpha, beta, delta;
   Move easyMove = 0;
 
   Stack *ss = pos->st; // At least the fifth element of the allocated array.
@@ -367,7 +367,7 @@ void thread_search(Pos *pos)
     ss[i].skipEarlyPruning = 0;
   }
 
-  bestValue = delta1 = delta2 = alpha = -VALUE_INFINITE;
+  bestValue = delta = alpha = -VALUE_INFINITE;
   beta = VALUE_INFINITE;
   pos->completedDepth = DEPTH_ZERO;
 
@@ -444,11 +444,9 @@ void thread_search(Pos *pos)
 
       // Reset aspiration window starting size
       if (pos->rootDepth >= 5 * ONE_PLY) {
-        Value prevScore = rm->move[PVIdx].previousScore;
-        delta1 = (prevScore < 0) ? (Value)((int)(8.0 + 0.1 * abs(prevScore))) : (Value)18;
-        delta2 = (prevScore > 0) ? (Value)((int)(8.0 + 0.1 * abs(prevScore))) : (Value)18;
-        alpha = max(prevScore - delta1,-VALUE_INFINITE);
-        beta  = min(prevScore + delta2, VALUE_INFINITE);
+        delta = (Value)18;
+        alpha = max(rm->move[PVIdx].previousScore - delta,-VALUE_INFINITE);
+        beta  = min(rm->move[PVIdx].previousScore + delta, VALUE_INFINITE);
       }
 
       // Start with a small aspiration window and, in the case of a fail
@@ -487,7 +485,7 @@ void thread_search(Pos *pos)
         // re-search, otherwise exit the loop.
         if (bestValue <= alpha) {
           beta = (alpha + beta) / 2;
-          alpha = max(bestValue - delta1, -VALUE_INFINITE);
+          alpha = max(bestValue - delta, -VALUE_INFINITE);
 
           if (pos->thread_idx == 0) {
             mainThread.failedLow = 1;
@@ -495,12 +493,11 @@ void thread_search(Pos *pos)
           }
         } else if (bestValue >= beta) {
 //          alpha = (alpha + beta) / 2;
-          beta = min(bestValue + delta2, VALUE_INFINITE);
+          beta = min(bestValue + delta, VALUE_INFINITE);
         } else
           break;
 
-        delta1 += delta1 / 4 + 5;
-        delta2 += delta2 / 4 + 5;
+        delta += delta / 4 + 5;
 
         assert(alpha >= -VALUE_INFINITE && beta <= VALUE_INFINITE);
       }
@@ -801,14 +798,14 @@ static void uci_print_pv(Pos *pos, Depth depth, Value alpha, Value beta)
     Depth d = updated ? depth : depth - ONE_PLY;
     Value v = updated ? rm->move[i].score : rm->move[i].previousScore;
 
-    int tb = TB_RootInTB && abs(v) < VALUE_MATE - MAX_PLY;
+    int tb = TB_RootInTB && abs(v) < VALUE_MATE - MAX_MATE_PLY;
     if (tb)
       v = rm->move[i].TBScore;
 
     // An incomplete mate PV may be caused by cutoffs in qsearch() and
     // by TB cutoffs. We try to complete the mate PV if we may be in the
     // latter case.
-    if (   abs(v) > VALUE_MATE - MAX_PLY
+    if (   abs(v) > VALUE_MATE - MAX_MATE_PLY
         && rm->move[i].pv_size < VALUE_MATE - abs(v)
         && TB_MaxCardinalityDTM > 0)
       TB_expand_mate(pos, &rm->move[i]);
