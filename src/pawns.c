@@ -49,7 +49,7 @@ static const Score Lever[8] = {
 // Weakness of our pawn shelter in front of the king by
 // [isKingFile][distance from edge][rank]. RANK_1 = 0 is used for
 // files where we have no pawns or our pawn is behind our king.
-static const Value ShelterWeakness[][4][8] = {
+const Value ShelterWeakness[2][4][8] = {
   { { V( 97), V(17), V( 9), V(44), V( 84), V( 87), V( 99) }, // Not On King file
     { V(106), V( 6), V(33), V(86), V( 87), V(104), V(112) },
     { V(101), V( 2), V(65), V(98), V( 58), V( 89), V(115) },
@@ -64,7 +64,7 @@ static const Value ShelterWeakness[][4][8] = {
 // [type][distance from edge][rank]. For the unopposed and unblocked cases,
 // RANK_1 = 0 is used when opponent has no pawn on the given file or
 // their pawn is behind our king.
-static const Value StormDanger[][4][8] = {
+static const Value StormDanger[4][4][8] = {
   { { V( 0),  V(-290), V(-274), V(57), V(41) },  // BlockedByKing
     { V( 0),  V(  60), V( 144), V(39), V(13) },
     { V( 0),  V(  65), V( 141), V(41), V(34) },
