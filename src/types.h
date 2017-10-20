@@ -100,10 +100,22 @@
 #define HasPext 0
 #endif
 
+#ifdef USE_AVX
+#define USE_AVX 1
+#else
+#define USE_AVX 0
+#endif
+
 #ifdef IS_64BIT
 #define Is64Bit 1
 #else
 #define Is64Bit 0
+#endif
+
+#ifdef USE_AVX2
+#define USE_AVX2 1
+#else
+#define USE_AVX2 0
 #endif
 
 #ifdef NUMA
