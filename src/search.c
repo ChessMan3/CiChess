@@ -322,6 +322,9 @@ void mainthread_search(void)
       if (    scoreDiff > 0
           && (depthDiff >= 0 || p->rootMoves->move[0].score >= VALUE_MATE_IN_MAX_PLY))
         bestThread = p;
+
+	else if((scoreDiff > (Value)16 * abs(depthDiff)) && depthDiff >= -2)
+             bestThread = p;
     }
   }
 
