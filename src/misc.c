@@ -125,7 +125,7 @@ void print_engine_info(int to_uci)
   }
 
   printf("%s%s%s%s\n", Is64Bit ? " x64" : " x32"
-                     , HasPext ? " BMI2" : ( USE_AVX ? " AVX" : (HasPopCnt ? " POPCNT" : ""))
+                     , HasPext ? " BMI2" : (USE_AVX2 ? " AVX2" : ( USE_AVX ? " AVX1" : (HasPopCnt ? " POPCNT" : "")))
                      , HasNuma ? " NUMA" : ""
                      , to_uci ? "\nid author T. Romstad, M. Costalba, "
                                 "J. Kiiski, G. Linscott"

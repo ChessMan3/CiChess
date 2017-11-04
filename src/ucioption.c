@@ -87,6 +87,13 @@ static void on_largepages(Option *opt)
 #endif
 
 static Option options_map[] = {
+  { "Wide Search", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
+  { "Clean Search", OPT_TYPE_BUTTON, 0, 0, 0, NULL, NULL, 0, NULL },
+  { "Razoring", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
+  { "Futility", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
+  { "Pruning", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
+  { "NullMove", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
+  { "ProbCut", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
   { "Debug Log File", OPT_TYPE_STRING, 0, 0, 0, "<empty>", on_logger, 0, NULL },
   { "Contempt", OPT_TYPE_SPIN, 0, -100, 100, NULL, NULL, 0, NULL },
   { "Threads", OPT_TYPE_SPIN, 1, 1, MAX_THREADS, NULL, on_threads, 0, NULL },
@@ -105,6 +112,8 @@ static Option options_map[] = {
   { "SyzygyProbeLimit", OPT_TYPE_SPIN, 6, 0, 6, NULL, NULL, 0, NULL },
   { "SyzygyUseDTM", OPT_TYPE_CHECK, 1, 0, 0, NULL, NULL, 0, NULL },
   { "LargePages", OPT_TYPE_CHECK, 1, 0, 0, NULL, on_largepages, 0, NULL },
+  { "KingSafe", OPT_TYPE_SPIN, 100, 100, 1500, NULL, NULL, 0, NULL },
+  { "Tactical", OPT_TYPE_CHECK, 0, 0, 0, NULL, NULL, 0, NULL },
   { "NUMA", OPT_TYPE_STRING, 0, 0, 0, "all", on_numa, 0, NULL },
   { NULL }
 };
