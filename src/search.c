@@ -95,44 +95,6 @@ struct Skill {
 //  Move best = 0;
 };
 
-// Easy move code for detecting an 'easy move'. If the PV is stable across
-// multiple search iterations, we can quickly return the best move.
-
-struct {
-  Key expectedPosKey;
-  int stableCnt;
-  Move pv[3];
-} EM;
-
-static void easy_move_clear(void)
-{
-  EM.stableCnt = 0;
-  EM.expectedPosKey = 0;
-  EM.pv[0] = EM.pv[1] = EM.pv[2] = 0;
-}
-
-static Move easy_move_get(Key key)
-{
-  return EM.expectedPosKey == key ? EM.pv[2] : 0;
-}
-
-static void easy_move_update(Pos *pos, Move *newPv)
-{
-  // Keep track of how many times in a row the 3rd ply remains stable
-  EM.stableCnt = (newPv[2] == EM.pv[2]) ? EM.stableCnt + 1 : 0;
-
-  if (newPv[0] != EM.pv[0] || newPv[1] != EM.pv[1] || newPv[2] != EM.pv[2]) {
-    EM.pv[0] = newPv[0];
-    EM.pv[1] = newPv[1];
-    EM.pv[2] = newPv[2];
-    do_move(pos, newPv[0], gives_check(pos, pos->st, newPv[0]));
-    do_move(pos, newPv[1], gives_check(pos, pos->st, newPv[1]));
-    EM.expectedPosKey = pos_key();
-    undo_move(pos, newPv[1]);
-    undo_move(pos, newPv[0]);
-  }
-}
-
 static Value DrawValue[2];
 //static CounterMoveHistoryStat CounterMoveHistory;
 
@@ -149,6 +111,8 @@ static Value value_from_tt(Value v, int ply);
 static void update_pv(Move *pv, Move move, Move *childPv);
 static void update_cm_stats(Stack *ss, Piece pc, Square s, int bonus);
 static void update_stats(const Pos *pos, Stack *ss, Move move, Move *quiets, int quietsCnt, int bonus);
+static void update_capture_stats(const Pos *pos, Move move, Move *captures, int captureCnt, int bonus);
+static int pv_is_draw(Pos *pos);
 static void check_time(void);
 static void stable_sort(RootMove *rm, int num);
 static void uci_print_pv(Pos *pos, Depth depth, Value alpha, Value beta);
@@ -199,9 +163,11 @@ void search_clear()
     Pos *pos = Threads.pos[idx];
     stats_clear(pos->counterMoves);
     stats_clear(pos->history);
+    stats_clear(pos->captureHistory);
   }
 
   mainThread.previousScore = VALUE_INFINITE;
+  mainThread.previousTimeReduction = 1;
 }
 
 
@@ -308,8 +274,7 @@ void mainthread_search(void)
 
   // Check if there are threads with a better score than main thread
   Pos *bestThread = pos;
-  if (   !mainThread.easyMovePlayed
-      &&  option_value(OPT_MULTI_PV) == 1
+  if (    option_value(OPT_MULTI_PV) == 1
       && !Limits.depth
 //      && !Skill(option_value(OPT_SKILL_LEVEL)).enabled()
       &&  pos->rootMoves->move[0].pv[0] != 0)
@@ -351,8 +316,11 @@ void mainthread_search(void)
 
 void thread_search(Pos *pos)
 {
+
   Value bestValue, alpha, beta, delta1, delta2;
-  Move easyMove = 0;
+  Move lastBestMove = 0;
+  Depth lastBestMoveDepth = DEPTH_ZERO;
+  double timeReduction = 1.0;
 
   Stack *ss = pos->st; // At least the fifth element of the allocated array.
   for (int i = -5; i < 3; i++)
@@ -372,9 +340,7 @@ void thread_search(Pos *pos)
   pos->completedDepth = DEPTH_ZERO;
 
   if (pos->thread_idx == 0) {
-    easyMove = easy_move_get(pos_key());
-    easy_move_clear();
-    mainThread.easyMovePlayed = mainThread.failedLow = 0;
+    mainThread.failedLow = 0;
     mainThread.bestMoveChanges = 0;
   }
 
@@ -521,6 +487,11 @@ skip_search:
     if (!Signals.stop)
       pos->completedDepth = pos->rootDepth;
 
+    if (rm->move[0].pv[0] != lastBestMove) {
+      lastBestMove = rm->move[0].pv[0];
+      lastBestMoveDepth = pos->rootDepth;
+    }
+
     // Have we found a "mate in x"?
     if (   Limits.mate
         && bestValue >= VALUE_MATE_IN_MAX_PLY
@@ -540,21 +511,31 @@ skip_search:
     if (use_time_management()) {
       if (!Signals.stop && !Signals.stopOnPonderhit) {
         // Stop the search if only one legal move is available, or if all
-        // of the available time has been used, or if we matched an easyMove
-        // from the previous search and just did a fast verification.
+        // of the available time has been used.
         const int F[] = { mainThread.failedLow,
                           bestValue - mainThread.previousScore };
 
         int improvingFactor = max(229, min(715, 357 + 119 * F[0] - 6 * F[1]));
-        double unstablePvFactor = 1 + mainThread.bestMoveChanges;
 
-        int doEasyMove =   rm->move[0].pv[0] == easyMove
-                         && mainThread.bestMoveChanges < 0.03
-                         && time_elapsed() > time_optimum() * 5 / 44;
+        int us = pos_stm();
+        int thinkHard =   DrawValue[us] == bestValue
+                       && Limits.time[us] - time_elapsed() > Limits.time[us ^ 1]
+                       && pv_is_draw(pos);
+
+        double unstablePvFactor = 1 + mainThread.bestMoveChanges + thinkHard;
+
+        // If the best move is stable over several iterations, reduce time
+        // for this move, the longer the move has been stable, the more.
+        // Use part of the time gained from a previous stable move for the
+        // current move.
+        timeReduction = 1;
+        for (int i = 3; i < 6; i++)
+          if (lastBestMoveDepth * i < pos->completedDepth && !thinkHard)
+            timeReduction *= 1.3;
+        unstablePvFactor *= pow(mainThread.previousTimeReduction, 0.51) / timeReduction;
 
         if (   rm->size == 1
-            || time_elapsed() > time_optimum() * unstablePvFactor * improvingFactor / 628
-            || (mainThread.easyMovePlayed = doEasyMove, doEasyMove))
+            || time_elapsed() > time_optimum() * unstablePvFactor * improvingFactor / 628)
         {
           // If we are allowed to ponder do not stop the search now but
           // keep pondering until the GUI sends "ponderhit" or "stop".
@@ -564,21 +545,13 @@ skip_search:
             Signals.stop = 1;
         }
       }
-
-      if (rm->move[0].pv_size >= 3)
-        easy_move_update(pos, rm->move[0].pv);
-      else
-        easy_move_clear();
     }
   }
 
   if (pos->thread_idx != 0)
     return;
 
-  // Clear any candidate easy move that wasn't stable for the last search
-  // iterations; the second condition prevents consecutive fast moves.
-  if (EM.stableCnt < 6 || mainThread.easyMovePlayed)
-    easy_move_clear();
+  mainThread.previousTimeReduction = timeReduction;
 
 #if 0
   // If skill level is enabled, swap best PV line with the sub-optimal one
@@ -692,6 +665,24 @@ static void update_cm_stats(Stack *ss, Piece pc, Square s, int bonus)
     cms_update(*(ss-4)->history, pc, s, bonus);
 }
 
+// update_capture_stats() updates move sorting heuristics when a new capture
+// best move is found
+
+void update_capture_stats(const Pos *pos, Move move, Move *captures,
+                          int captureCnt, int bonus)
+{
+  Piece moved_piece = moved_piece(move);
+  int captured = type_of_p(piece_on(to_sq(move)));
+  cpth_update(*pos->captureHistory, moved_piece, to_sq(move), captured, bonus);
+
+  // Decrease all the other played capture moves
+  for (int i = 0; i < captureCnt; i++) {
+    moved_piece = moved_piece(captures[i]);
+    captured = type_of_p(piece_on(to_sq(captures[i])));
+    cpth_update(*pos->captureHistory, moved_piece, to_sq(captures[i]), captured, -bonus);
+  }
+}
+
 // update_stats() updates killers, history, countermove and countermove
 // plus follow-up move history when a new quiet best move is found.
 
@@ -717,6 +708,23 @@ void update_stats(const Pos *pos, Stack *ss, Move move, Move *quiets,
     history_update(*pos->history, c, quiets[i], -bonus);
     update_cm_stats(ss, moved_piece(quiets[i]), to_sq(quiets[i]), -bonus);
   }
+}
+
+static int pv_is_draw(Pos *pos)
+{
+  RootMove *rm = &pos->rootMoves->move[0];
+
+  pos->st->endMoves = (pos->st-1)->endMoves;
+
+  for (int i = 0; i < rm->pv_size; i++)
+    do_move(pos, rm->pv[i], gives_check(pos, pos->st, rm->pv[i]));
+
+  int isDraw = is_draw(pos);
+
+  for (int i = rm->pv_size; i > 0; i--)
+    undo_move(pos, rm->pv[i - 1]);
+
+  return isDraw;
 }
 
 #if 0
