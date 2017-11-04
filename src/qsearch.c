@@ -125,7 +125,8 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
     if (   !InCheck
         && !givesCheck
         &&  futilityBase > -VALUE_KNOWN_WIN
-        && type_of_m(move) == NORMAL) {
+        && !advanced_pawn_push(pos, move)) {
+      assert(type_of_m(move) != ENPASSANT); // Due to !pos.advanced_pawn_push
 
       futilityValue = futilityBase + PieceValue[EG][piece_on(to_sq(move))];
 
@@ -148,7 +149,7 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
 
     // Don't search moves with negative SEE values
     if (  (!InCheck || evasionPrunable)
-        && (depth != DEPTH_ZERO || type_of_m(move) != PROMOTION)
+        &&  type_of_m(move) != PROMOTION
         &&  !see_test(pos, move, 0))
       continue;
 
@@ -175,7 +176,11 @@ Value name_NT_InCheck(qsearch)(Pos* pos, Stack* ss, Value alpha, BETA_ARG
     undo_move(pos, move);
 
     assert(value > -VALUE_INFINITE && value < VALUE_INFINITE);
-
+	int variety;
+	variety = option_value(OPT_VARIETY);
+	//Add a little variety to play
+    if (variety && value + (variety * 5 * PawnValueEg / 100) >= 0 )
+		value += rand() % (variety * 5);	
     // Check for a new best move
     if (value > bestValue) {
       bestValue = value;

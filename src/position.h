@@ -160,7 +160,6 @@ struct Pos {
   // Pointers to thread-specific tables.
   CounterMoveStat *counterMoves;
   ButterflyHistory *history;
-  CapturePieceToHistory *captureHistory;
   PawnEntry *pawnTable;
   MaterialEntry *materialTable;
   CounterMoveHistoryStat *counterMoveHistory;
