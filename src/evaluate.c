@@ -758,7 +758,7 @@ Value evaluate(const Pos *pos)
   assert(!pos_checkers());
 
   Score mobility[2] = { SCORE_ZERO, SCORE_ZERO };
-  Value v;
+  //Value v;
   EvalInfo ei;
 
   // Probe the material hash table
@@ -778,6 +778,8 @@ Value evaluate(const Pos *pos)
   // Probe the pawn hash table
   ei.pe = pawn_probe(pos);
   score += ei.pe->score;
+
+  Value v;
 
   // Initialize attack and king safety bitboards.
   evalinfo_init(pos, &ei, WHITE);

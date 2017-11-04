@@ -106,6 +106,12 @@
 #define USE_AVX 0
 #endif
 
+#ifdef USE_AVX
+#define USE_AVX 1
+#else
+#define USE_AVX 0
+#endif
+
 #ifdef IS_64BIT
 #define Is64Bit 1
 #else
@@ -426,6 +432,7 @@ typedef Move CounterMoveStat[16][64];
 typedef int16_t PieceToHistory[16][64];
 typedef PieceToHistory CounterMoveHistoryStat[16][64];
 typedef int16_t ButterflyHistory[2][4096];
+typedef int16_t CapturePieceToHistory[16][64][8];
 
 struct ExtMove {
   Move move;
