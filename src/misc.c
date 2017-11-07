@@ -108,7 +108,7 @@ void print_engine_info(int to_uci)
 {
   char my_date[64];
 
-  printf("CiChess_1.8 %s", Version);
+  printf("CiChess %s", Version);
 
   if (strlen(Version) == 0) {
     int day, month, year;
@@ -125,7 +125,7 @@ void print_engine_info(int to_uci)
   }
 
   printf("%s%s%s%s\n", Is64Bit ? " x64" : " x32"
-                     , HasPext ? " BMI2" : (USE_AVX2 ? " AVX2" : ( USE_AVX ? " AVX1" : (HasPopCnt ? " POPCNT" : "")))
+                     , HasPext ? " BMI2" : (USE_AVX2 ? " AVX2" : ( USE_AVX ? " AVX1" : (HasPopCnt ? " POP" : "")))
                      , HasNuma ? " NUMA" : ""
                      , to_uci ? "\nid author T. Romstad, M. Costalba, "
                                 "J. Kiiski, G. Linscott"

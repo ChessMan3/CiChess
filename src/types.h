@@ -99,12 +99,6 @@
 #else
 #define HasPext 0
 #endif
-  
-#ifdef USE_AVX
-#define USE_AVX 1
-#else
-#define USE_AVX 0
-#endif
 
 #ifdef USE_AVX
 #define USE_AVX 1
